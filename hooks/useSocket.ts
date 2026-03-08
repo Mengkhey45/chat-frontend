@@ -21,11 +21,12 @@ export function useSocket() {
       return
     }
 
-    // Use environment variable for the Gateway URL, fallback to localhost
-    const GATEWAY_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:80'
+    // Use environment variable for the Gateway URL, or current domain if using rewrites/proxy
+    const GATEWAY_URL = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' ? window.location.origin : '');
 
-    // Create socket connection - Point directly to the Gateway
+    // Create socket connection - Point to the domain (will be proxied via next.config.mjs)
     const socket = io(GATEWAY_URL, {
+      path: '/socket.io/', // Ensure this matches your gateway/backend path
       auth: {
         token: localStorage.getItem('token'),
         userId: user.id,
