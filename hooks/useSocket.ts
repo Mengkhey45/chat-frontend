@@ -21,8 +21,11 @@ export function useSocket() {
       return
     }
 
+    // Use environment variable for the Gateway URL, fallback to localhost
+    const GATEWAY_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:80'
+
     // Create socket connection - Point directly to the Gateway
-    const socket = io('http://localhost', {
+    const socket = io(GATEWAY_URL, {
       auth: {
         token: localStorage.getItem('token'),
         userId: user.id,
@@ -34,7 +37,8 @@ export function useSocket() {
     })
 
     // Connection events
-    socket.on('connect', () => {
+...
+
       console.log('[Socket] Connected')
       // Re-join current room if any
       if (currentConversation) {

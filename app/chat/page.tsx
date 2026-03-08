@@ -26,8 +26,8 @@ export default function ChatPage() {
   const currentConversation = useChatStore((state) => state.currentConversation)
   const [loading, setLoading] = useState(true)
 
-  // Explicit Gateway URL for development to bypass local Next.js proxying issues
-  const GATEWAY_URL = 'http://localhost:80'
+  // Gateway URL from environment or fallback to localhost
+  const GATEWAY_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:80'
 
   const api = useMemo(() => {
     const instance = axios.create()

@@ -7,10 +7,12 @@ const nextConfig = {
     unoptimized: true,
   },
   async rewrites() {
+    const GATEWAY_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:80';
+    
     return [
       {
         source: '/api/:path*',
-        destination: 'http://localhost:80/api/:path*', // Proxy to the Nginx Gateway
+        destination: `${GATEWAY_URL}/api/:path*`, 
       },
     ];
   },
