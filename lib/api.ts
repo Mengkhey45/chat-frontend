@@ -1,8 +1,8 @@
 import axios from 'axios';
 
-// Get the API URL from environment variable or fallback to localhost
-// On Vercel, this should be your Railway Gateway URL
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:80';
+// When deployed, we use relative paths so Vercel handles the proxying via rewrites
+// This solves all CORS issues completely.
+export const API_BASE_URL = '';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
