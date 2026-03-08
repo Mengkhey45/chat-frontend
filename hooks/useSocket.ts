@@ -37,8 +37,7 @@ export function useSocket() {
     })
 
     // Connection events
-...
-
+    socket.on('connect', () => {
       console.log('[Socket] Connected')
       // Re-join current room if any
       if (currentConversation) {
