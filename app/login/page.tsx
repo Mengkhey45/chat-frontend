@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import axios from 'axios'
+import api from '@/lib/api'
 import { useAuthStore } from '@/store/authStore'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -24,7 +24,7 @@ export default function LoginPage() {
     setError(null)
 
     try {
-      const response = await axios.post('/api/auth/signin', {
+      const response = await api.post('/api/auth/signin', {
         email,
         password
       })

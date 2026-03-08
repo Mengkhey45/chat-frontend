@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, useState, useMemo } from 'react'
-import axios from 'axios'
+import { useEffect, useState } from 'react'
+import api from '@/lib/api'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { SocketProvider } from '@/components/SocketProvider'
 import { ChatSidebar } from '@/components/ChatSidebar'
@@ -26,21 +26,6 @@ export default function ChatPage() {
   const currentConversation = useChatStore((state) => state.currentConversation)
   const [loading, setLoading] = useState(true)
 
-  // Gateway URL from environment or fallback to localhost
-  const GATEWAY_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:80'
-
-  const api = useMemo(() => {
-    const instance = axios.create()
-    instance.interceptors.request.use((config) => {
-      const activeToken = useAuthStore.getState().token || localStorage.getItem('token')
-      if (activeToken) {
-        config.headers.Authorization = `Bearer ${activeToken}`
-      }
-      return config
-    })
-    return instance
-  }, [])
-
   // Initialize data
   useEffect(() => {
     const fetchData = async () => {
@@ -49,11 +34,11 @@ export default function ChatPage() {
       
       try {
         setLoading(true)
-        console.log('[ChatPage] Attempting to fetch from Gateway...')
+        console.log('[ChatPage] Attempting to fetch data...')
         
         // 1. Check health first
         try {
-          const health = await api.get(`${GATEWAY_URL}/api/chat/health`)
+          const health = await api.get('/api/chat/health')
           console.log('[ChatPage] Chat Service Health:', health.data)
         } catch (e) {
           console.warn('[ChatPage] Health check failed, but proceeding anyway...')
@@ -61,8 +46,8 @@ export default function ChatPage() {
 
         // 2. Fetch real data
         const [convRes, friendsRes] = await Promise.all([
-          api.get(`${GATEWAY_URL}/api/chat/conversations`),
-          api.get(`${GATEWAY_URL}/api/chat/friends`)
+          api.get('/api/chat/conversations'),
+          api.get('/api/chat/friends')
         ])
         
         console.log('[ChatPage] Success! Data loaded.')
@@ -76,7 +61,6 @@ export default function ChatPage() {
         console.group('[ChatPage] Fatal Initialization Error')
         console.error('Status:', error.response?.status)
         console.error('Data:', error.response?.data)
-        console.error('Full URL:', error.config?.url)
         console.groupEnd()
       } finally {
         setLoading(false)
@@ -84,14 +68,14 @@ export default function ChatPage() {
     }
 
     fetchData()
-  }, [api, token])
+  }, [token, setConversations, setFriends, setCurrentConversation, currentConversation])
 
   // Load messages
   useEffect(() => {
     const fetchMessages = async () => {
       if (currentConversation && (token || localStorage.getItem('token'))) {
         try {
-          const res = await api.get(`${GATEWAY_URL}/api/chat/messages/${currentConversation.id}`)
+          const res = await api.get(`/api/chat/messages/${currentConversation.id}`)
           setMessages(res.data)
           setSidebarOpen(false)
         } catch (error: any) {
@@ -100,7 +84,7 @@ export default function ChatPage() {
       }
     }
     fetchMessages()
-  }, [currentConversation, api, token])
+  }, [currentConversation, token, setMessages, setSidebarOpen])
 
   if (loading) {
     return (

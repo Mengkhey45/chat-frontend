@@ -2,7 +2,7 @@
 
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import axios from 'axios'
+import api from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -25,7 +25,7 @@ function VerifyContent() {
     setError(null)
 
     try {
-      await axios.post('/api/auth/verify-email', {
+      await api.post('/api/auth/verify-email', {
         email,
         code
       })
@@ -44,7 +44,7 @@ function VerifyContent() {
     setIsResending(true)
     setError(null)
     try {
-      await axios.post('/api/auth/resend-verification', { email })
+      await api.post('/api/auth/resend-verification', { email })
       alert('New code sent to your email!')
     } catch (err: any) {
       setError(err.response?.data?.error || 'Failed to resend code')
