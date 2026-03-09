@@ -5,7 +5,6 @@ import { useChatStore } from '@/store/chatStore'
 import { useAuthStore } from '@/store/authStore'
 import { useReadReceipts } from '@/hooks/useChat'
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import { formatDistanceToNow } from 'date-fns'
 import { MessageCircle, FileIcon, Check, CheckCheck } from 'lucide-react'
 
@@ -22,10 +21,7 @@ export function MessagesArea() {
   // Auto scroll to bottom when new messages arrive
   useEffect(() => {
     if (scrollRef.current) {
-      const scrollElement = scrollRef.current
-      setTimeout(() => {
-        scrollElement.scrollTop = scrollElement.scrollHeight
-      }, 0)
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight
     }
   }, [messages])
 
@@ -48,8 +44,8 @@ export function MessagesArea() {
   )
 
   return (
-    <ScrollArea className="flex-1">
-      <div ref={scrollRef} className="p-4 space-y-4">
+    <div ref={scrollRef} className="flex-1 overflow-y-auto">
+      <div className="p-4 space-y-4">
         {conversationMessages.length === 0 ? (
           <div className="flex items-center justify-center h-full py-8">
             <div className="text-center">
@@ -173,6 +169,6 @@ export function MessagesArea() {
           </div>
         )}
       </div>
-    </ScrollArea>
+    </div>
   )
 }
