@@ -10,11 +10,11 @@ const nextConfig = {
     return [
       {
         source: '/api/:path*',
-        destination: `https://chat-backend-production-3d78.up.railway.app/api/:path*`,
+        destination: `http://localhost:80/api/:path*`,
       },
       {
         source: '/socket.io/:path*',
-        destination: `https://chat-backend-production-3d78.up.railway.app/socket.io/:path*`,
+        destination: `http://localhost:80/socket.io/:path*`,
       }
     ]
   }
