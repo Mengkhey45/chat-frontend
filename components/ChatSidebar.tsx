@@ -5,6 +5,7 @@ import { useAuthStore } from '@/store/authStore'
 import { useChatStore } from '@/store/chatStore'
 import { useUIStore } from '@/store/uiStore'
 import { useFriendsStore } from '@/store/friendsStore'
+import api from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -38,25 +39,30 @@ export function ChatSidebar() {
     logout()
   }
 
-  const handleStartDM = (friendId: string, friendName: string) => {
-    // Create or select existing DM conversation
-    const conversation = conversations.find(
+  const handleStartDM = async (friendId: string, friendName: string) => {
+    // Check if existing DM conversation exists
+    const existing = conversations.find(
       (c) => c.type === 'dm' && c.members.includes(friendId)
     )
     
-    if (conversation) {
-      setCurrentConversation(conversation)
+    if (existing) {
+      setCurrentConversation(existing)
     } else {
-      // In a real app, create new conversation via API
-      const newConversation = {
-        id: 'dm-' + friendId + '-' + Date.now(),
-        name: friendName,
-        type: 'dm' as const,
-        members: [user?.id || '', friendId],
-        unreadCount: 0,
-        createdAt: new Date().toISOString(),
+      try {
+        const res = await api.post('/api/chat/conversations', {
+          participants: [friendId],
+          isGroup: false,
+        })
+        const newConv = res.data
+        // Refresh conversations list
+        const convRes = await api.get('/api/chat/conversations')
+        useChatStore.getState().setConversations(convRes.data)
+        // Select the new conversation
+        const created = convRes.data.find((c: any) => c.id === newConv.id)
+        if (created) setCurrentConversation(created)
+      } catch (err) {
+        console.error('Failed to create DM:', err)
       }
-      setCurrentConversation(newConversation)
     }
   }
 

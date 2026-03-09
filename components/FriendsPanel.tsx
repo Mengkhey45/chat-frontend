@@ -36,9 +36,14 @@ export function FriendsPanel() {
     try {
       await api.put(`/api/chat/friends/request/${requestId}`, { status: 'accepted' })
       acceptFriendRequest(requestId)
-      // Refresh friends list
-      const res = await api.get('/api/chat/friends')
-      useFriendsStore.getState().setFriends(res.data)
+      // Refresh friends list and conversations
+      const [friendsRes, convRes] = await Promise.all([
+        api.get('/api/chat/friends'),
+        api.get('/api/chat/conversations')
+      ])
+      useFriendsStore.getState().setFriends(friendsRes.data)
+      const { useChatStore } = await import('@/store/chatStore')
+      useChatStore.getState().setConversations(convRes.data)
     } catch (err) {
       console.error('Failed to accept request:', err)
     } finally {
