@@ -37,15 +37,7 @@ export default function ChatPage() {
         setLoading(true)
         console.log('[ChatPage] Attempting to fetch data...')
         
-        // 1. Check health first
-        try {
-          const health = await api.get('/api/chat/health')
-          console.log('[ChatPage] Chat Service Health:', health.data)
-        } catch (e) {
-          console.warn('[ChatPage] Health check failed, but proceeding anyway...')
-        }
-
-        // 2. Fetch real data
+        // Fetch real data
         const [convRes, friendsRes, requestsRes] = await Promise.all([
           api.get('/api/chat/conversations'),
           api.get('/api/chat/friends'),
