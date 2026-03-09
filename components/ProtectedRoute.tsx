@@ -10,17 +10,19 @@ interface ProtectedRouteProps {
 
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const router = useRouter()
-  const { user, token } = useAuthStore()
+  const { user, token, _hasHydrated } = useAuthStore()
 
   useEffect(() => {
-    // Check if user is authenticated
+    // Wait for Zustand to rehydrate from localStorage before checking auth
+    if (!_hasHydrated) return
+
     if (!user || !token) {
       router.push('/login')
     }
-  }, [user, token, router])
+  }, [user, token, _hasHydrated, router])
 
-  // Show nothing while redirecting
-  if (!user || !token) {
+  // Show loading while hydrating or while redirecting
+  if (!_hasHydrated || !user || !token) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
         <div className="text-center">

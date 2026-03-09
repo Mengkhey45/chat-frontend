@@ -21,6 +21,7 @@ export default function InvitePage() {
   const userId = params.userId as string
   const currentUser = useAuthStore((state) => state.user)
   const token = useAuthStore((state) => state.token)
+  const hasHydrated = useAuthStore((state) => state._hasHydrated)
 
   const [pageState, setPageState] = useState<'loading' | 'idle' | 'sending' | 'success' | 'error' | 'already-friends'>('loading')
   const [message, setMessage] = useState('')
@@ -28,6 +29,9 @@ export default function InvitePage() {
   const [friendStatus, setFriendStatus] = useState<FriendStatus>({ status: 'none' })
 
   useEffect(() => {
+    // Wait for Zustand to rehydrate from localStorage
+    if (!hasHydrated) return
+
     if (!token) {
       const returnUrl = `/invite/${userId}`
       router.push(`/login?redirect=${encodeURIComponent(returnUrl)}`)
@@ -72,7 +76,7 @@ export default function InvitePage() {
     }
 
     fetchStatus()
-  }, [token, userId, currentUser, router])
+  }, [hasHydrated, token, userId, currentUser, router])
 
   const handleSendRequest = async () => {
     setPageState('sending')

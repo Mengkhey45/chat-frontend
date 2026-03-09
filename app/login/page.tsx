@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import api from '@/lib/api'
 import { useAuthStore } from '@/store/authStore'
 import { Button } from '@/components/ui/button'
@@ -12,6 +12,7 @@ import { Mail, Lock, Loader2 } from 'lucide-react'
 
 export default function LoginPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { setUser, setToken, setLoading, setError, isLoading, error } = useAuthStore()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -37,7 +38,8 @@ export default function LoginPage() {
       setToken(token)
       setUser(user)
 
-      router.push('/chat')
+      const redirect = searchParams.get('redirect')
+      router.push(redirect || '/chat')
     } catch (err: any) {
       const errorMessage = err.response?.data?.error || err.message || 'Login failed'
       setLocalError(errorMessage)
