@@ -155,7 +155,7 @@ export function FriendsPanel() {
                                   <Avatar className="w-9 h-9">
                                     <AvatarImage src={friend.avatar} />
                                     <AvatarFallback className="bg-primary text-primary-foreground text-xs">
-                                      {friend.name.charAt(0).toUpperCase()}
+                                      {(friend.name || '?').charAt(0).toUpperCase()}
                                     </AvatarFallback>
                                   </Avatar>
                                   <div className="absolute bottom-0 right-0 w-2.5 h-2.5 status-online rounded-full border-2 border-card" />
@@ -195,12 +195,12 @@ export function FriendsPanel() {
                                 <Avatar className="w-9 h-9">
                                   <AvatarImage src={friend.avatar} />
                                   <AvatarFallback className="bg-secondary text-foreground text-xs">
-                                    {friend.name.charAt(0).toUpperCase()}
+                                    {(friend.name || '?').charAt(0).toUpperCase()}
                                   </AvatarFallback>
                                 </Avatar>
                                 <div className="flex-1 min-w-0">
                                   <p className="text-sm font-medium text-foreground truncate">
-                                    {friend.name}
+                                    {friend.name || 'Unknown'}
                                   </p>
                                   <p className="text-xs text-muted-foreground">Offline</p>
                                 </div>
@@ -238,7 +238,7 @@ export function FriendsPanel() {
                         <Avatar className="w-9 h-9">
                           <AvatarImage src={request.fromUser.avatar} />
                           <AvatarFallback className="bg-primary text-primary-foreground text-xs">
-                            {request.fromUser.name.charAt(0).toUpperCase()}
+                            {(request.fromUser?.name || '?').charAt(0).toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
                         <div className="flex-1 min-w-0">

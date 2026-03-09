@@ -167,7 +167,7 @@ export function ChatSidebar() {
                         <Avatar className="w-10 h-10">
                           <AvatarImage src={conversation.avatar} />
                           <AvatarFallback className="bg-primary text-primary-foreground">
-                            {conversation.name.charAt(0).toUpperCase()}
+                            {(conversation.name || '?').charAt(0).toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
                         <div className="flex-1 min-w-0">
@@ -216,7 +216,7 @@ export function ChatSidebar() {
                           <Avatar className="w-10 h-10">
                             <AvatarImage src={friend.avatar} />
                             <AvatarFallback className="bg-primary text-primary-foreground">
-                              {friend.name.charAt(0).toUpperCase()}
+                              {(friend.name || '?').charAt(0).toUpperCase()}
                             </AvatarFallback>
                           </Avatar>
                           <div

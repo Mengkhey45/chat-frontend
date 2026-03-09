@@ -77,7 +77,7 @@ export function UserProfile() {
                 <Avatar className="w-16 h-16">
                   <AvatarImage src={user.avatar} />
                   <AvatarFallback className="bg-primary text-primary-foreground text-xl">
-                    {user.name.charAt(0).toUpperCase()}
+                    {(user.name || '?').charAt(0).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1">

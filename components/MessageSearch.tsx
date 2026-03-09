@@ -83,7 +83,7 @@ export function MessageSearch({ isOpen, onClose }: MessageSearchProps) {
                     <Avatar className="w-8 h-8 flex-shrink-0">
                       <AvatarImage src={message.senderAvatar} />
                       <AvatarFallback className="bg-primary text-primary-foreground text-xs">
-                        {message.senderName.charAt(0).toUpperCase()}
+                        {(message.senderName || '?').charAt(0).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1 min-w-0">

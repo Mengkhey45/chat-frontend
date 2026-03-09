@@ -78,7 +78,7 @@ export function MessagesArea() {
                     <Avatar className="w-10 h-10">
                       <AvatarImage src={message.senderAvatar} />
                       <AvatarFallback className="bg-primary text-primary-foreground text-xs">
-                        {message.senderName.charAt(0).toUpperCase()}
+                        {(message.senderName || '?').charAt(0).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
                   )}

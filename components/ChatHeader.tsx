@@ -57,7 +57,7 @@ export function ChatHeader() {
           <Avatar className="w-10 h-10 flex-shrink-0">
             <AvatarImage src={currentConversation.avatar} />
             <AvatarFallback className="bg-primary text-primary-foreground">
-              {currentConversation.name.charAt(0).toUpperCase()}
+              {(currentConversation.name || '?').charAt(0).toUpperCase()}
             </AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
