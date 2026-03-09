@@ -1,58 +1,32 @@
-import { useEffect, useRef, useCallback } from 'react'
-import { io, Socket } from 'socket.io-client'
+import { useEffect, useCallback } from 'react'
 import { useAuthStore } from '@/store/authStore'
-import { useChatStore, Message, Conversation } from '@/store/chatStore'
+import { useChatStore, Message } from '@/store/chatStore'
 import { usePresenceStore } from '@/store/presenceStore'
 import { useFriendsStore } from '@/store/friendsStore'
+import { getSocket, connectSocket, disconnectSocket } from '@/lib/socket'
 
 export function useSocket() {
-  const socketRef = useRef<Socket | null>(null)
   const user = useAuthStore((state) => state.user)
+  const token = useAuthStore((state) => state.token)
   const currentConversation = useChatStore((state) => state.currentConversation)
   const addMessage = useChatStore((state) => state.addMessage)
   const addTypingUser = useChatStore((state) => state.addTypingUser)
   const removeTypingUser = useChatStore((state) => state.removeTypingUser)
-  const setOnlineUsers = usePresenceStore((state) => state.setOnlineUsers)
   const setUserStatus = usePresenceStore((state) => state.setUserStatus)
   const updateFriendStatus = useFriendsStore((state) => state.updateFriendStatus)
 
   const connect = useCallback(() => {
-    if (!user || socketRef.current?.connected) {
-      return
-    }
+    if (!user) return
+    const authToken = token || localStorage.getItem('token')
+    if (!authToken) return
 
-    // Use environment variable for the Gateway URL, or current domain if using rewrites/proxy
-    const GATEWAY_URL = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' ? window.location.origin : '');
+    const socket = connectSocket(authToken, user.id)
 
-    // Create socket connection - Point to the domain (will be proxied via next.config.mjs)
-    const socket = io(GATEWAY_URL, {
-      path: '/socket.io/', // Ensure this matches your gateway/backend path
-      auth: {
-        token: localStorage.getItem('token'),
-        userId: user.id,
-      },
-      reconnection: true,
-      reconnectionDelay: 1000,
-      reconnectionDelayMax: 5000,
-      reconnectionAttempts: 5,
-    })
-
-    // Connection events
-    socket.on('connect', () => {
-      console.log('[Socket] Connected')
-      // Re-join current room if any
-      if (currentConversation) {
-        socket.emit('join_room', currentConversation.id)
-      }
-    })
-
-    socket.on('disconnect', () => {
-      console.log('[Socket] Disconnected')
-    })
-
-    socket.on('error', (error) => {
-      console.error('[Socket] Error:', error)
-    })
+    // Remove old listeners before adding new ones (prevent duplicates)
+    socket.off('message:new')
+    socket.off('typing:start')
+    socket.off('typing:stop')
+    socket.off('presence:update')
 
     // Message events
     socket.on('message:new', (message: Message) => {
@@ -74,35 +48,36 @@ export function useSocket() {
       updateFriendStatus(data.userId, data.status)
     })
 
-    socketRef.current = socket
-  }, [user, currentConversation, addMessage, addTypingUser, removeTypingUser, setOnlineUsers, setUserStatus, updateFriendStatus])
+    // Join current conversation room if any
+    if (currentConversation) {
+      socket.emit('join_room', currentConversation.id)
+    }
+  }, [user, token, currentConversation, addMessage, addTypingUser, removeTypingUser, setUserStatus, updateFriendStatus])
 
   const disconnect = useCallback(() => {
-    if (socketRef.current) {
-      socketRef.current.disconnect()
-      socketRef.current = null
-    }
+    disconnectSocket()
   }, [])
 
   const emit = useCallback((event: string, data?: any) => {
-    if (socketRef.current?.connected) {
-      socketRef.current.emit(event, data)
+    const socket = getSocket()
+    if (socket?.connected) {
+      socket.emit(event, data)
+    } else {
+      console.warn('[Socket] Not connected, cannot emit:', event)
     }
   }, [])
 
   // Join room when conversation changes
   useEffect(() => {
-    if (socketRef.current?.connected && currentConversation) {
-      socketRef.current.emit('join_room', currentConversation.id)
+    const socket = getSocket()
+    if (socket?.connected && currentConversation) {
+      socket.emit('join_room', currentConversation.id)
     }
   }, [currentConversation])
 
   const sendMessage = useCallback(
     (conversationId: string, content: string) => {
-      emit('message:send', {
-        conversationId,
-        content,
-      })
+      emit('message:send', { conversationId, content })
     },
     [emit]
   )
@@ -137,13 +112,13 @@ export function useSocket() {
 
   // Auto connect when user is available
   useEffect(() => {
-    if (user && !socketRef.current?.connected) {
+    if (user) {
       connect()
     }
   }, [user, connect])
 
   return {
-    socket: socketRef.current,
+    socket: getSocket(),
     connect,
     disconnect,
     emit,
@@ -152,6 +127,6 @@ export function useSocket() {
     stopTyping,
     setStatus,
     markAsRead,
-    isConnected: socketRef.current?.connected ?? false,
+    isConnected: getSocket()?.connected ?? false,
   }
 }

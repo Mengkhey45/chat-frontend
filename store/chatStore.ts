@@ -52,7 +52,9 @@ export const useChatStore = create<ChatState>((set) => ({
   setCurrentConversation: (conversation) => set({ currentConversation: conversation }),
   addMessage: (message) =>
     set((state) => ({
-      messages: [...state.messages, message],
+      messages: state.messages.some((m) => m.id === message.id)
+        ? state.messages
+        : [...state.messages, message],
       conversations: state.conversations.map((conv) =>
         conv.id === message.conversationId
           ? { ...conv, lastMessage: message, unreadCount: 0 }

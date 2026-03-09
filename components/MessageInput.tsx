@@ -32,20 +32,8 @@ export function MessageInput() {
       return
     }
 
-    const newMessage = {
-      id: 'msg-' + Date.now(),
-      conversationId: currentConversation.id,
-      senderId: user.id,
-      senderName: user.name,
-      senderAvatar: user.avatar,
-      content: content.trim(),
-      createdAt: new Date().toISOString(),
-      isRead: true,
-    }
-
-    addMessage(newMessage)
-    
-    // Also send via Socket if available
+    // Send via Socket — the server will broadcast message:new back to all room members
+    // (including the sender), so no need to add locally
     sendViaSocket(content.trim())
     
     setContent('')
