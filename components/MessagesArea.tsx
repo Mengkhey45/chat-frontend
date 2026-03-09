@@ -107,16 +107,31 @@ export function MessagesArea() {
                   >
                     {message.fileUrl ? (
                       <div className="space-y-2">
-                        <div className="flex items-center gap-2">
-                          <FileIcon className="w-4 h-4" />
-                          <span className="text-sm">{message.fileName}</span>
-                        </div>
-                        {message.fileName?.match(/\.(jpg|jpeg|png|gif|webp)$/i) && (
+                        {message.fileType === 'image' || message.fileName?.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
                           <img
                             src={message.fileUrl}
-                            alt={message.fileName}
-                            className="max-w-xs rounded-lg"
+                            alt={message.fileName || 'Image'}
+                            className="max-w-full rounded-lg cursor-pointer"
+                            style={{ maxHeight: '300px', objectFit: 'contain' }}
+                            onClick={() => window.open(message.fileUrl, '_blank')}
                           />
+                        ) : message.fileType === 'video' || message.fileName?.match(/\.(mp4|webm|mov)$/i) ? (
+                          <video
+                            src={message.fileUrl}
+                            controls
+                            className="max-w-full rounded-lg"
+                            style={{ maxHeight: '300px' }}
+                          />
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <FileIcon className="w-4 h-4 flex-shrink-0" />
+                            <span className="text-sm truncate">{message.fileName || 'File'}</span>
+                          </div>
+                        )}
+                        {message.content && !message.content.startsWith('Shared:') && (
+                          <p className="text-sm leading-normal whitespace-pre-wrap">
+                            {message.content}
+                          </p>
                         )}
                       </div>
                     ) : (

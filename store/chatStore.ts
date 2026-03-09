@@ -9,6 +9,7 @@ export interface Message {
   content: string
   fileUrl?: string
   fileName?: string
+  fileType?: string
   createdAt: string
   updatedAt?: string
   isRead: boolean

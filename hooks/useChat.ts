@@ -8,12 +8,12 @@ export function useChat(conversationId: string | undefined) {
   const readTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   const handleSendMessage = useCallback(
-    (content: string) => {
-      if (!conversationId || !content.trim()) {
+    (content: string, fileInfo?: { fileData: string; fileName: string; fileType: string }) => {
+      if (!conversationId || (!content.trim() && !fileInfo)) {
         return
       }
 
-      sendMessage(conversationId, content)
+      sendMessage(conversationId, content, fileInfo)
       stopTyping(conversationId)
 
       // Clear typing timeout

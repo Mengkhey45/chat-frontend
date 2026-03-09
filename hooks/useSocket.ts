@@ -76,8 +76,8 @@ export function useSocket() {
   }, [currentConversation])
 
   const sendMessage = useCallback(
-    (conversationId: string, content: string) => {
-      emit('message:send', { conversationId, content })
+    (conversationId: string, content: string, fileInfo?: { fileData: string; fileName: string; fileType: string }) => {
+      emit('message:send', { conversationId, content, ...fileInfo })
     },
     [emit]
   )
