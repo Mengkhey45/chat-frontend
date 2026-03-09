@@ -3,12 +3,13 @@
 import { useState } from 'react'
 import { useFriendsStore } from '@/store/friendsStore'
 import { useUIStore } from '@/store/uiStore'
+import api from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { X, Plus, UserCheck, UserX, Search } from 'lucide-react'
+import { X, Plus, UserCheck, UserX, Search, Loader2 } from 'lucide-react'
 
 export function FriendsPanel() {
   const showFriendsPanel = useUIStore((state) => state.showFriendsPanel)
@@ -21,6 +22,7 @@ export function FriendsPanel() {
   const [searchQuery, setSearchQuery] = useState('')
   const [friendCode, setFriendCode] = useState('')
   const [activeTab, setActiveTab] = useState('friends')
+  const [processingId, setProcessingId] = useState<string | null>(null)
 
   const filteredFriends = friends.filter((friend) =>
     friend.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -28,6 +30,33 @@ export function FriendsPanel() {
 
   const onlineFriends = filteredFriends.filter((f) => f.status === 'online')
   const offlineFriends = filteredFriends.filter((f) => f.status !== 'online')
+
+  const handleAcceptRequest = async (requestId: string) => {
+    setProcessingId(requestId)
+    try {
+      await api.put(`/api/chat/friends/request/${requestId}`, { status: 'accepted' })
+      acceptFriendRequest(requestId)
+      // Refresh friends list
+      const res = await api.get('/api/chat/friends')
+      useFriendsStore.getState().setFriends(res.data)
+    } catch (err) {
+      console.error('Failed to accept request:', err)
+    } finally {
+      setProcessingId(null)
+    }
+  }
+
+  const handleRejectRequest = async (requestId: string) => {
+    setProcessingId(requestId)
+    try {
+      await api.put(`/api/chat/friends/request/${requestId}`, { status: 'rejected' })
+      rejectFriendRequest(requestId)
+    } catch (err) {
+      console.error('Failed to reject request:', err)
+    } finally {
+      setProcessingId(null)
+    }
+  }
 
   const handleAddFriend = (e: React.FormEvent) => {
     e.preventDefault()
@@ -218,13 +247,19 @@ export function FriendsPanel() {
                       </div>
                       <div className="flex gap-2">
                         <button
-                          onClick={() => acceptFriendRequest(request.id)}
+                          onClick={() => handleAcceptRequest(request.id)}
+                          disabled={processingId === request.id}
                           className="p-1.5 hover:bg-green-500/20 rounded-lg transition-colors"
                         >
-                          <UserCheck className="w-4 h-4 text-green-500" />
+                          {processingId === request.id ? (
+                            <Loader2 className="w-4 h-4 text-muted-foreground animate-spin" />
+                          ) : (
+                            <UserCheck className="w-4 h-4 text-green-500" />
+                          )}
                         </button>
                         <button
-                          onClick={() => rejectFriendRequest(request.id)}
+                          onClick={() => handleRejectRequest(request.id)}
+                          disabled={processingId === request.id}
                           className="p-1.5 hover:bg-red-500/20 rounded-lg transition-colors"
                         >
                           <UserX className="w-4 h-4 text-red-500" />

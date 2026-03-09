@@ -22,6 +22,7 @@ export default function ChatPage() {
   const setCurrentConversation = useChatStore((state) => state.setCurrentConversation)
   const setMessages = useChatStore((state) => state.setMessages)
   const setFriends = useFriendsStore((state) => state.setFriends)
+  const setFriendRequests = useFriendsStore((state) => state.setFriendRequests)
   const setSidebarOpen = useUIStore((state) => state.setSidebarOpen)
   const currentConversation = useChatStore((state) => state.currentConversation)
   const [loading, setLoading] = useState(true)
@@ -45,14 +46,16 @@ export default function ChatPage() {
         }
 
         // 2. Fetch real data
-        const [convRes, friendsRes] = await Promise.all([
+        const [convRes, friendsRes, requestsRes] = await Promise.all([
           api.get('/api/chat/conversations'),
-          api.get('/api/chat/friends')
+          api.get('/api/chat/friends'),
+          api.get('/api/chat/friends/requests')
         ])
         
         console.log('[ChatPage] Success! Data loaded.')
         setConversations(convRes.data)
         setFriends(friendsRes.data)
+        setFriendRequests(requestsRes.data)
 
         if (convRes.data.length > 0 && !currentConversation) {
           setCurrentConversation(convRes.data[0])
