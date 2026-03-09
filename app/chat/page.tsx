@@ -37,20 +37,39 @@ export default function ChatPage() {
         setLoading(true)
         console.log('[ChatPage] Attempting to fetch data...')
         
-        // Fetch real data
-        const [convRes, friendsRes, requestsRes] = await Promise.all([
-          api.get('/api/chat/conversations'),
-          api.get('/api/chat/friends'),
-          api.get('/api/chat/friends/requests')
-        ])
-        
-        console.log('[ChatPage] Success! Data loaded.')
-        setConversations(convRes.data)
-        setFriends(friendsRes.data)
-        setFriendRequests(requestsRes.data)
+        // Fetch data individually so one failure doesn't block others
+        let convData: any[] = []
+        let friendsData: any[] = []
+        let requestsData: any[] = []
 
-        if (convRes.data.length > 0 && !currentConversation) {
-          setCurrentConversation(convRes.data[0])
+        try {
+          const convRes = await api.get('/api/chat/conversations')
+          convData = convRes.data
+        } catch (e: any) {
+          console.warn('[ChatPage] Failed to fetch conversations:', e.response?.data)
+        }
+
+        try {
+          const friendsRes = await api.get('/api/chat/friends')
+          friendsData = friendsRes.data
+        } catch (e: any) {
+          console.warn('[ChatPage] Failed to fetch friends:', e.response?.data)
+        }
+
+        try {
+          const requestsRes = await api.get('/api/chat/friends/requests')
+          requestsData = requestsRes.data
+        } catch (e: any) {
+          console.warn('[ChatPage] Failed to fetch requests:', e.response?.data)
+        }
+
+        console.log('[ChatPage] Data loaded:', { conversations: convData.length, friends: friendsData.length, requests: requestsData.length })
+        setConversations(convData)
+        setFriends(friendsData)
+        setFriendRequests(requestsData)
+
+        if (convData.length > 0 && !currentConversation) {
+          setCurrentConversation(convData[0])
         }
       } catch (error: any) {
         console.group('[ChatPage] Fatal Initialization Error')
