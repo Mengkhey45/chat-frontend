@@ -1,48 +1,52 @@
 @import 'tailwindcss';
 
 :root {
-  /* Chat App Color Palette - Dark Theme */
-  --background: #0F0F0F;
-  --foreground: #F5F5F5;
-  --card: #1A1A1A;
-  --card-foreground: #F5F5F5;
-  --popover: #1A1A1A;
-  --popover-foreground: #F5F5F5;
-  --primary: #8B5CF6;
+  /* Light theme. Every value below was contrast-checked against the surface it
+     sits on; the dark values live under .dark. Previously :root and .dark held
+     byte-identical dark values, so "Light" had nothing to switch to. */
+  --background: #F7F7FA;
+  --foreground: #17171C;
+  --card: #FFFFFF;
+  --card-foreground: #17171C;
+  --popover: #FFFFFF;
+  --popover-foreground: #17171C;
+  --primary: #7C3AED;            /* white on it: 5.70 */
   --primary-foreground: #FFFFFF;
-  --secondary: #2A2A2A;
-  --secondary-foreground: #F5F5F5;
-  --muted: #404040;
-  --muted-foreground: #A0A0A0;
-  --accent: #8B5CF6;
+  --primary-accent: #6D28D9;     /* violet as text on white: 7.10 */
+  --secondary: #EFEFF4;
+  --secondary-foreground: #17171C;
+  --muted: #E4E4EA;
+  --muted-foreground: #5C5C66;   /* 6.61 on card, 5.77 on secondary */
+  --accent: #7C3AED;
   --accent-foreground: #FFFFFF;
-  --destructive: #EF4444;
+  --destructive: #DC2626;        /* 4.83 as text */
   --destructive-foreground: #FFFFFF;
-  --border: #333333;
-  --input: #2A2A2A;
-  --ring: #8B5CF6;
-  
-  /* Status Colors */
-  --online: #10B981;
-  --away: #F59E0B;
+  --border: #D2D2DA;
+  --border-strong: #8E8E9A;      /* 3.24 — real edge for inputs and focus */
+  --input: #FFFFFF;
+  --ring: #7C3AED;
+
+  /* Status Colors — darkened so the labels beside the dots are readable. */
+  --online: #047857;
+  --away: #B45309;
   --offline: #6B7280;
-  
+
   /* Accent Colors */
-  --accent-blue: #3B82F6;
-  --accent-pink: #EC4899;
-  --accent-orange: #F97316;
-  --accent-teal: #06B6D4;
-  --accent-rose: #FB7185;
-  
+  --accent-blue: #1D4ED8;
+  --accent-pink: #BE185D;
+  --accent-orange: #C2410C;
+  --accent-teal: #0E7490;
+  --accent-rose: #BE123C;
+
   --radius: 0.5rem;
-  --sidebar: #1A1A1A;
-  --sidebar-foreground: #F5F5F5;
-  --sidebar-primary: #8B5CF6;
+  --sidebar: #FFFFFF;
+  --sidebar-foreground: #17171C;
+  --sidebar-primary: #7C3AED;
   --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #2A2A2A;
-  --sidebar-accent-foreground: #F5F5F5;
-  --sidebar-border: #333333;
-  --sidebar-ring: #8B5CF6;
+  --sidebar-accent: #EFEFF4;
+  --sidebar-accent-foreground: #17171C;
+  --sidebar-border: #D2D2DA;
+  --sidebar-ring: #7C3AED;
 }
 
 .dark {
@@ -52,24 +56,32 @@
   --card-foreground: #F5F5F5;
   --popover: #1A1A1A;
   --popover-foreground: #F5F5F5;
-  --primary: #8B5CF6;
+  /* Filled violet — buttons, own message bubbles. Deepened from #8B5CF6:
+     white text on that was 4.23:1, below the 4.5:1 minimum. This is 5.70:1. */
+  --primary: #7C3AED;
   --primary-foreground: #FFFFFF;
+  /* Violet as *text* on a dark ground needs to go the other way. 7.04:1. */
+  --primary-accent: #A78BFA;
   --secondary: #2A2A2A;
   --secondary-foreground: #F5F5F5;
   --muted: #404040;
   --muted-foreground: #A0A0A0;
-  --accent: #8B5CF6;
+  --accent: #7C3AED;
   --accent-foreground: #FFFFFF;
   --destructive: #EF4444;
   --destructive-foreground: #FFFFFF;
-  --border: #333333;
+  /* Quiet dividers. */
+  --border: #3E3E46;
+  /* Edges that carry meaning — inputs, focus rings — clear 3:1. */
+  --border-strong: #68687A;
   --input: #2A2A2A;
-  --ring: #8B5CF6;
+  --ring: #A78BFA;
   
   /* Status Colors */
   --online: #10B981;
   --away: #F59E0B;
-  --offline: #6B7280;
+  /* Was #6B7280 — only 3.60:1 as label text. */
+  --offline: #8A93A1;
   
   /* Accent Colors */
   --accent-blue: #3B82F6;
@@ -81,12 +93,12 @@
   --radius: 0.5rem;
   --sidebar: #1A1A1A;
   --sidebar-foreground: #F5F5F5;
-  --sidebar-primary: #8B5CF6;
+  --sidebar-primary: #7C3AED;
   --sidebar-primary-foreground: #FFFFFF;
   --sidebar-accent: #2A2A2A;
   --sidebar-accent-foreground: #F5F5F5;
-  --sidebar-border: #333333;
-  --sidebar-ring: #8B5CF6;
+  --sidebar-border: #3E3E46;
+  --sidebar-ring: #A78BFA;
 }
 
 @theme {
@@ -98,6 +110,7 @@
   --color-popover-foreground: var(--popover-foreground);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-primary-accent: var(--primary-accent);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
@@ -107,6 +120,7 @@
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
   --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
   --color-input: var(--input);
   --color-ring: var(--ring);
   --color-online: var(--online);

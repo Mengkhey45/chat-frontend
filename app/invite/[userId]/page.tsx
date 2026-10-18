@@ -3,10 +3,10 @@
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useAuthStore } from '@/store/authStore'
-import api from '@/lib/api'
+import api, { bootstrapSession } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { UserPlus, Loader2, Check, X, Users } from 'lucide-react'
+import { UserPlus, Loader2, Check, X, Users, Info } from 'lucide-react'
 import Link from 'next/link'
 
 type FriendStatus = {
@@ -22,15 +22,21 @@ export default function InvitePage() {
   const currentUser = useAuthStore((state) => state.user)
   const token = useAuthStore((state) => state.token)
   const hasHydrated = useAuthStore((state) => state._hasHydrated)
+  const sessionChecked = useAuthStore((state) => state._sessionChecked)
 
   const [pageState, setPageState] = useState<'loading' | 'idle' | 'sending' | 'success' | 'error' | 'already-friends'>('loading')
   const [message, setMessage] = useState('')
   const [inviterName, setInviterName] = useState('')
   const [friendStatus, setFriendStatus] = useState<FriendStatus>({ status: 'none' })
 
+  // The access token is memory-only, so restore the session from the refresh
+  // cookie before concluding this visitor is signed out.
   useEffect(() => {
-    // Wait for Zustand to rehydrate from localStorage
-    if (!hasHydrated) return
+    if (hasHydrated && !sessionChecked) void bootstrapSession()
+  }, [hasHydrated, sessionChecked])
+
+  useEffect(() => {
+    if (!hasHydrated || !sessionChecked) return
 
     if (!token) {
       const returnUrl = `/invite/${userId}`
@@ -76,7 +82,7 @@ export default function InvitePage() {
     }
 
     fetchStatus()
-  }, [hasHydrated, token, userId, currentUser, router])
+  }, [hasHydrated, sessionChecked, token, userId, currentUser, router])
 
   const handleSendRequest = async () => {
     setPageState('sending')
@@ -143,11 +149,13 @@ export default function InvitePage() {
     if (pageState === 'error') {
       return (
         <div className="text-center space-y-4">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-red-500/20 text-red-500">
-            <X className="w-6 h-6" />
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-secondary text-primary">
+            <Info className="w-6 h-6" />
           </div>
-          <p className="text-sm text-muted-foreground">{message}</p>
-          <Button onClick={() => router.push('/chat')} variant="outline" className="w-full">
+          <p className="text-sm text-foreground/80 font-medium">
+            {message || "We couldn't connect this invite right now."}
+          </p>
+          <Button onClick={() => router.push('/chat')} className="w-full">
             Go to Chat
           </Button>
         </div>

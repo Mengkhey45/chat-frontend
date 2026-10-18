@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useUIStore } from '@/store/uiStore'
 import { useAuthStore } from '@/store/authStore'
 import { Button } from '@/components/ui/button'
@@ -15,10 +15,11 @@ import {
   Mail, 
   Copy, 
   Check,
-  Send
+  Send,
+  Download
 } from 'lucide-react'
-import { QRCodeSVG } from 'qrcode.react'
-import axios from 'axios'
+import { QRCodeCanvas } from 'qrcode.react'
+import api from '@/lib/api'
 
 export function AddFriendModal() {
   const showAddFriendModal = useUIStore((state) => state.showAddFriendModal)
@@ -28,8 +29,10 @@ export function AddFriendModal() {
   const [friendName, setFriendName] = useState('')
   const [gmailAddress, setGmailAddress] = useState('')
   const [isCopied, setIsCopied] = useState(false)
+  const [isQRCopied, setIsQRCopied] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [status, setStatus] = useState<{ type: 'success' | 'error', message: string } | null>(null)
+  const qrCanvasRef = useRef<HTMLCanvasElement>(null)
 
   if (!showAddFriendModal || !user) return null
 
@@ -41,6 +44,51 @@ export function AddFriendModal() {
     setTimeout(() => setIsCopied(false), 2000)
   }
 
+  const handleCopyQRImage = async () => {
+    const canvas = qrCanvasRef.current
+    if (!canvas) return
+
+    try {
+      if (typeof window !== 'undefined' && navigator.clipboard && typeof ClipboardItem !== 'undefined') {
+        canvas.toBlob(async (blob) => {
+          if (!blob) return
+          try {
+            await navigator.clipboard.write([
+              new ClipboardItem({ 'image/png': blob })
+            ])
+            setIsQRCopied(true)
+            setTimeout(() => setIsQRCopied(false), 2000)
+          } catch (err) {
+            // Fallback: copy link if image clipboard access is restricted
+            await navigator.clipboard.writeText(inviteLink)
+            setIsQRCopied(true)
+            setTimeout(() => setIsQRCopied(false), 2000)
+          }
+        }, 'image/png')
+      } else {
+        await navigator.clipboard.writeText(inviteLink)
+        setIsQRCopied(true)
+        setTimeout(() => setIsQRCopied(false), 2000)
+      }
+    } catch (err) {
+      console.error('Failed to copy QR code image:', err)
+    }
+  }
+
+  const handleDownloadQR = () => {
+    const canvas = qrCanvasRef.current
+    if (!canvas) return
+
+    const imageUri = canvas.toDataURL('image/png')
+    const link = document.createElement('a')
+    link.href = imageUri
+    const safeName = (user.name || 'chatly').toLowerCase().replace(/[^a-z0-9]/g, '_')
+    link.download = `${safeName}_chatly_qr.png`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
+
   const handleAddByName = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!friendName.trim()) return
@@ -49,11 +97,9 @@ export function AddFriendModal() {
     setStatus(null)
     try {
       // Endpoint expected to handle friend requests by name or email
-      await axios.post('/api/chat/friends/request', { 
+      await api.post('/api/chat/friends/request', {
         receiverEmail: friendName.includes('@') ? friendName : undefined,
-        receiverName: !friendName.includes('@') ? friendName : undefined
-      }, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        receiverName: !friendName.includes('@') ? friendName : undefined,
       })
       setStatus({ type: 'success', message: 'Friend request sent!' })
       setFriendName('')
@@ -68,8 +114,8 @@ export function AddFriendModal() {
     e.preventDefault()
     if (!gmailAddress.trim()) return
     
-    const subject = encodeURIComponent('Join me on Discord Chat!')
-    const body = encodeURIComponent(`Hey! I want to invite you to join me on Discord Chat. Click here to sign up: ${inviteLink}`)
+    const subject = encodeURIComponent('Join me on Chatly')
+    const body = encodeURIComponent(`Hey! Join me on Chatly so we can chat. Sign up here: ${inviteLink}`)
     window.open(`https://mail.google.com/mail/?view=cm&fs=1&to=${gmailAddress}&su=${subject}&body=${body}`, '_blank')
   }
 
@@ -161,11 +207,43 @@ export function AddFriendModal() {
 
             {/* QR Code */}
             <TabsContent value="qr" className="space-y-4 flex flex-col items-center">
-              <div className="p-4 bg-white rounded-xl shadow-inner">
-                <QRCodeSVG value={inviteLink} size={180} />
+              <div className="p-4 bg-white rounded-2xl shadow-md border border-border/20 flex flex-col items-center justify-center">
+                <QRCodeCanvas
+                  ref={qrCanvasRef}
+                  value={inviteLink}
+                  size={180}
+                  marginSize={2}
+                  level="M"
+                />
               </div>
-              <p className="text-sm text-muted-foreground text-center max-w-[250px]">
-                Show this code to a friend so they can scan it with their phone camera.
+
+              <div className="flex flex-wrap items-center justify-center gap-2 w-full max-w-sm">
+                <Button
+                  size="sm"
+                  onClick={handleCopyQRImage}
+                  className="gap-2 flex-1 min-w-[140px] bg-primary hover:bg-primary/90 text-primary-foreground font-medium shadow-sm transition-all"
+                >
+                  {isQRCopied ? (
+                    <Check className="w-4 h-4 text-emerald-400" />
+                  ) : (
+                    <Copy className="w-4 h-4" />
+                  )}
+                  {isQRCopied ? 'Copied QR Image!' : 'Copy QR Image'}
+                </Button>
+
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleDownloadQR}
+                  className="gap-2 flex-1 min-w-[130px] border-border bg-secondary hover:bg-secondary/80 text-foreground"
+                >
+                  <Download className="w-4 h-4" />
+                  Save Image
+                </Button>
+              </div>
+
+              <p className="text-xs text-muted-foreground text-center max-w-[280px] leading-relaxed">
+                Scan with a phone camera, or copy the image to paste directly into Discord, WhatsApp, or Telegram.
               </p>
             </TabsContent>
 

@@ -3,13 +3,14 @@
 import { useState } from 'react'
 import { useFriendsStore } from '@/store/friendsStore'
 import { useUIStore } from '@/store/uiStore'
+import { useChatStore } from '@/store/chatStore'
 import api from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { X, Plus, UserCheck, UserX, Search, Loader2 } from 'lucide-react'
+import { X, Plus, UserCheck, UserX, Search, Loader2, MessageCircle, Lock } from 'lucide-react'
 
 export function FriendsPanel() {
   const showFriendsPanel = useUIStore((state) => state.showFriendsPanel)
@@ -60,6 +61,32 @@ export function FriendsPanel() {
       console.error('Failed to reject request:', err)
     } finally {
       setProcessingId(null)
+    }
+  }
+
+  const handleStartChat = async (friendId: string, isSecret = false) => {
+    const { conversations, setCurrentConversation, setConversations } = useChatStore.getState()
+    const existing = conversations.find(
+      (c) => c.type === 'dm' && c.members.includes(friendId) && Boolean(c.isE2EE) === Boolean(isSecret)
+    )
+    if (existing) {
+      setCurrentConversation(existing)
+      setShowFriendsPanel(false)
+    } else {
+      try {
+        const res = await api.post('/api/chat/conversations', {
+          participants: [friendId],
+          isGroup: false,
+          isE2EE: isSecret,
+        })
+        const convRes = await api.get('/api/chat/conversations')
+        setConversations(convRes.data)
+        const created = convRes.data.find((c: any) => c.id === res.data.id)
+        if (created) setCurrentConversation(created)
+        setShowFriendsPanel(false)
+      } catch (err) {
+        console.error('Failed to start chat from friends panel:', err)
+      }
     }
   }
 
@@ -167,12 +194,29 @@ export function FriendsPanel() {
                                   <p className="text-xs text-muted-foreground">Online</p>
                                 </div>
                               </div>
-                              <button
-                                onClick={() => removeFriend(friend.userId)}
-                                className="p-1 hover:bg-red-500/20 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
-                              >
-                                <UserX className="w-4 h-4 text-red-500" />
-                              </button>
+                                <div className="flex items-center gap-1">
+                                  <button
+                                    onClick={() => handleStartChat(friend.userId, false)}
+                                    title="Start Regular Chat"
+                                    className="p-1.5 hover:bg-background rounded-lg transition-colors text-muted-foreground hover:text-foreground"
+                                  >
+                                    <MessageCircle className="w-4 h-4" />
+                                  </button>
+                                  <button
+                                    onClick={() => handleStartChat(friend.userId, true)}
+                                    title="Start Secret Chat 🔒 (E2EE)"
+                                    className="p-1.5 hover:bg-emerald-500/20 rounded-lg transition-colors text-emerald-400"
+                                  >
+                                    <Lock className="w-4 h-4" />
+                                  </button>
+                                  <button
+                                    onClick={() => removeFriend(friend.userId)}
+                                    title="Remove Friend"
+                                    className="p-1.5 hover:bg-red-500/20 rounded-lg transition-colors text-muted-foreground hover:text-red-500"
+                                  >
+                                    <UserX className="w-4 h-4" />
+                                  </button>
+                                </div>
                             </div>
                           ))}
                         </div>
@@ -189,7 +233,7 @@ export function FriendsPanel() {
                           {offlineFriends.map((friend) => (
                             <div
                               key={friend.userId}
-                              className="p-3 rounded-lg bg-secondary hover:bg-secondary/80 flex items-center justify-between group transition-colors opacity-60"
+                              className="p-3 rounded-lg bg-secondary hover:bg-secondary/80 flex items-center justify-between group transition-colors opacity-75 hover:opacity-100"
                             >
                               <div className="flex items-center gap-3 flex-1 min-w-0">
                                 <Avatar className="w-9 h-9">
@@ -205,12 +249,29 @@ export function FriendsPanel() {
                                   <p className="text-xs text-muted-foreground">Offline</p>
                                 </div>
                               </div>
-                              <button
-                                onClick={() => removeFriend(friend.userId)}
-                                className="p-1 hover:bg-red-500/20 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
-                              >
-                                <UserX className="w-4 h-4 text-red-500" />
-                              </button>
+                              <div className="flex items-center gap-1">
+                                <button
+                                  onClick={() => handleStartChat(friend.userId, false)}
+                                  title="Start Regular Chat"
+                                  className="p-1.5 hover:bg-background rounded-lg transition-colors text-muted-foreground hover:text-foreground"
+                                >
+                                  <MessageCircle className="w-4 h-4" />
+                                </button>
+                                <button
+                                  onClick={() => handleStartChat(friend.userId, true)}
+                                  title="Start Secret Chat 🔒 (E2EE)"
+                                  className="p-1.5 hover:bg-emerald-500/20 rounded-lg transition-colors text-emerald-400"
+                                >
+                                  <Lock className="w-4 h-4" />
+                                </button>
+                                <button
+                                  onClick={() => removeFriend(friend.userId)}
+                                  title="Remove Friend"
+                                  className="p-1.5 hover:bg-red-500/20 rounded-lg transition-colors text-muted-foreground hover:text-red-500"
+                                >
+                                  <UserX className="w-4 h-4" />
+                                </button>
+                              </div>
                             </div>
                           ))}
                         </div>
@@ -291,7 +352,7 @@ export function FriendsPanel() {
                     className="bg-secondary border-border text-foreground placeholder:text-muted-foreground"
                   />
                   <p className="text-xs text-muted-foreground">
-                    Ask your friend for their Discord friend code
+                    Ask your friend for the email they signed up with
                   </p>
                 </div>
                 <Button

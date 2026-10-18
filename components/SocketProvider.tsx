@@ -3,6 +3,7 @@
 import { useEffect } from 'react'
 import { useSocket } from '@/hooks/useSocket'
 import { useAuthStore } from '@/store/authStore'
+import { usePreferencesStore } from '@/store/preferencesStore'
 
 interface SocketProviderProps {
   children: React.ReactNode
@@ -10,37 +11,30 @@ interface SocketProviderProps {
 
 export function SocketProvider({ children }: SocketProviderProps) {
   const user = useAuthStore((state) => state.user)
-  const { connect, disconnect, setStatus } = useSocket()
+  const { setStatus, isConnected } = useSocket()
+  const shareOnlineStatus = usePreferencesStore((s) => s.shareOnlineStatus)
 
-  // Initialize socket when user is authenticated
+  // Announce presence once the socket is actually up. Emitting on mount alone
+  // raced the connection and the first `online` was frequently dropped.
   useEffect(() => {
-    if (user) {
-      connect()
-      setStatus('online')
+    if (!user || !isConnected) return
 
-      // Handle page visibility for away status
-      const handleVisibilityChange = () => {
-        if (document.hidden) {
-          setStatus('away')
-        } else {
-          setStatus('online')
-        }
-      }
-
-      document.addEventListener('visibilitychange', handleVisibilityChange)
-
-      return () => {
-        document.removeEventListener('visibilitychange', handleVisibilityChange)
-      }
+    // "Show when you're online" off means this client reports offline and stops
+    // tracking visibility, rather than the setting being decorative.
+    if (!shareOnlineStatus) {
+      setStatus('offline')
+      return
     }
-  }, [user, connect, setStatus])
 
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      // Don't disconnect - keep connection for other windows
+    setStatus('online')
+
+    const handleVisibilityChange = () => {
+      setStatus(document.hidden ? 'away' : 'online')
     }
-  }, [])
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
+  }, [user, isConnected, setStatus, shareOnlineStatus])
 
   return <>{children}</>
 }

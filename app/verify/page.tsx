@@ -3,6 +3,7 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import api from '@/lib/api'
+import { withRedirect } from '@/lib/redirect'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -13,6 +14,7 @@ function VerifyContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [email, setEmail] = useState(searchParams.get('email') || '')
+  const redirect = searchParams.get('redirect')
   const [code, setCode] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [isResending, setIsResending] = useState(false)
@@ -31,7 +33,7 @@ function VerifyContent() {
       })
       setSuccess(true)
       setTimeout(() => {
-        router.push('/login')
+        router.push(withRedirect('/login', redirect))
       }, 2000)
     } catch (err: any) {
       setError(err.response?.data?.error || 'Verification failed')
@@ -125,7 +127,7 @@ function VerifyContent() {
             >
               {isResending ? 'Sending...' : "Didn't receive a code? Resend"}
             </Button>
-            <Link href="/login" className="inline-flex items-center justify-center text-sm text-muted-foreground hover:text-foreground">
+            <Link href={withRedirect('/login', redirect)} className="inline-flex items-center justify-center text-sm text-muted-foreground hover:text-foreground">
               <ArrowLeft className="w-4 h-4 mr-2" /> Back to Login
             </Link>
           </div>
@@ -140,10 +142,12 @@ export default function VerifyPage() {
     <div className="min-h-screen bg-gradient-to-br from-background to-secondary flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary mb-4">
-            <span className="text-2xl font-bold text-primary-foreground">D</span>
-          </div>
-          <h1 className="text-3xl font-bold text-foreground mb-2">Discord Chat</h1>
+          <img
+            src="/icon.svg"
+            alt="Chatly"
+            className="w-16 h-16 rounded-2xl shadow-lg shadow-primary/20 mb-4 inline-block"
+          />
+          <h1 className="text-3xl font-bold text-foreground mb-2">Chatly</h1>
         </div>
         
         <Suspense fallback={

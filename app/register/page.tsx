@@ -1,9 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import api from '@/lib/api'
+import { withRedirect } from '@/lib/redirect'
 import { useAuthStore } from '@/store/authStore'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -11,7 +12,21 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { User, Mail, Lock, Loader2, CheckCircle2 } from 'lucide-react'
 
 export default function RegisterPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+      </div>
+    }>
+      <RegisterContent />
+    </Suspense>
+  )
+}
+
+function RegisterContent() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const redirect = searchParams.get('redirect')
   const { setLoading, setError, isLoading, error } = useAuthStore()
   const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
@@ -39,7 +54,11 @@ export default function RegisterPage() {
 
       setIsSuccess(true)
     } catch (err: any) {
-      const errorMessage = err.response?.data?.error || err.message || 'Registration failed'
+      const errorMessage =
+        err.response?.data?.error ||
+        (err.message && !err.message.includes('status code') && !err.message.includes('Network Error')
+          ? err.message
+          : 'Unable to create your account. Please check your details and try again.')
       setLocalError(errorMessage)
       setError(errorMessage)
     } finally {
@@ -62,10 +81,10 @@ export default function RegisterPage() {
             </p>
             <div className="space-y-3">
               <Button asChild className="w-full bg-primary hover:bg-primary/90">
-                <Link href={`/verify?email=${encodeURIComponent(email)}`}>Verify Account</Link>
+                <Link href={withRedirect(`/verify?email=${encodeURIComponent(email)}`, redirect)}>Verify Account</Link>
               </Button>
               <Button asChild variant="outline" className="w-full">
-                <Link href="/login">Back to Sign In</Link>
+                <Link href={withRedirect('/login', redirect)}>Back to Sign In</Link>
               </Button>
             </div>
           </div>
@@ -79,10 +98,12 @@ export default function RegisterPage() {
       <div className="w-full max-w-md">
         {/* Logo/Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary mb-4">
-            <span className="text-2xl font-bold text-primary-foreground">D</span>
-          </div>
-          <h1 className="text-3xl font-bold text-foreground mb-2">Discord Chat</h1>
+          <img
+            src="/icon.svg"
+            alt="Chatly"
+            className="w-16 h-16 rounded-2xl shadow-lg shadow-primary/20 mb-4 inline-block"
+          />
+          <h1 className="text-3xl font-bold text-foreground mb-2">Chatly</h1>
           <p className="text-muted-foreground">Join our community and start chatting</p>
         </div>
 
@@ -194,7 +215,7 @@ export default function RegisterPage() {
             <div className="mt-4 pt-4 border-t border-border">
               <p className="text-sm text-muted-foreground text-center">
                 Already have an account?{' '}
-                <Link href="/login" className="text-primary hover:text-primary/80 font-medium">
+                <Link href={withRedirect('/login', redirect)} className="text-primary hover:text-primary/80 font-medium">
                   Sign in
                 </Link>
               </p>

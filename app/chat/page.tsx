@@ -11,13 +11,16 @@ import { MessageInput } from '@/components/MessageInput'
 import { FriendsPanel } from '@/components/FriendsPanel'
 import { UserProfile } from '@/components/UserProfile'
 import { AddFriendModal } from '@/components/AddFriendModal'
+import { CallOverlay } from '@/components/CallOverlay'
+import { CreateGroupModal } from '@/components/CreateGroupModal'
 import { useChatStore } from '@/store/chatStore'
 import { useFriendsStore } from '@/store/friendsStore'
 import { useUIStore } from '@/store/uiStore'
 import { useAuthStore } from '@/store/authStore'
+import { initUserE2EE } from '@/lib/crypto'
 
 export default function ChatPage() {
-  const { token } = useAuthStore()
+  const { token, user } = useAuthStore()
   const setConversations = useChatStore((state) => state.setConversations)
   const setCurrentConversation = useChatStore((state) => state.setCurrentConversation)
   const setMessages = useChatStore((state) => state.setMessages)
@@ -27,11 +30,29 @@ export default function ChatPage() {
   const currentConversation = useChatStore((state) => state.currentConversation)
   const [loading, setLoading] = useState(true)
 
+  // Initialize E2EE Keys
+  useEffect(() => {
+    if (!user?.id) return
+    initUserE2EE(user.id)
+      .then(async (publicKey) => {
+        if (!user.publicKey) {
+          try {
+            await api.put('/api/chat/keys', { publicKey })
+            useAuthStore.getState().setUser({ ...user, publicKey })
+          } catch (err) {
+            console.warn('[E2EE] Could not upload public key to server:', err)
+          }
+        }
+      })
+      .catch((err) => {
+        console.error('[E2EE] Failed to initialize encryption keys:', err)
+      })
+  }, [user?.id, user?.publicKey])
+
   // Initialize data
   useEffect(() => {
     const fetchData = async () => {
-      const activeToken = token || (typeof window !== 'undefined' ? localStorage.getItem('token') : null)
-      if (!activeToken) return
+      if (!token) return
       
       try {
         setLoading(true)
@@ -68,7 +89,7 @@ export default function ChatPage() {
         setFriends(friendsData)
         setFriendRequests(requestsData)
 
-        if (convData.length > 0 && !currentConversation) {
+        if (convData.length > 0 && !useChatStore.getState().currentConversation) {
           setCurrentConversation(convData[0])
         }
       } catch (error: any) {
@@ -82,12 +103,12 @@ export default function ChatPage() {
     }
 
     fetchData()
-  }, [token, setConversations, setFriends, setCurrentConversation, currentConversation])
+  }, [token, setConversations, setFriends, setFriendRequests, setCurrentConversation])
 
   // Load messages
   useEffect(() => {
     const fetchMessages = async () => {
-      if (currentConversation && (token || localStorage.getItem('token'))) {
+      if (currentConversation && token) {
         try {
           const res = await api.get(`/api/chat/messages/${currentConversation.id}`)
           setMessages(res.data)
@@ -100,19 +121,16 @@ export default function ChatPage() {
     fetchMessages()
   }, [currentConversation, token, setMessages, setSidebarOpen])
 
-  if (loading) {
-    return (
-      <div className="h-screen w-screen flex items-center justify-center bg-background">
-        <div className="flex flex-col items-center gap-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-          <p className="text-muted-foreground text-sm font-medium">Connecting to Gateway...</p>
-        </div>
-      </div>
-    )
-  }
-
   return (
     <ProtectedRoute>
+      {loading ? (
+        <div className="h-screen w-screen flex items-center justify-center bg-background">
+          <div className="flex flex-col items-center gap-4">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+            <p className="text-muted-foreground text-sm font-medium">Loading your conversations…</p>
+          </div>
+        </div>
+      ) : (
       <SocketProvider>
         <div className="h-screen bg-background flex overflow-hidden">
           <ChatSidebar />
@@ -124,8 +142,11 @@ export default function ChatPage() {
           <FriendsPanel />
           <UserProfile />
           <AddFriendModal />
+          <CreateGroupModal />
+          <CallOverlay />
         </div>
       </SocketProvider>
+      )}
     </ProtectedRoute>
   )
 }

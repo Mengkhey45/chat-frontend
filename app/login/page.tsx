@@ -4,6 +4,7 @@ import { useState, Suspense } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import api from '@/lib/api'
+import { safeRedirect, withRedirect } from '@/lib/redirect'
 import { useAuthStore } from '@/store/authStore'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -43,17 +44,20 @@ function LoginContent() {
       })
 
       const { token, user } = response.data
-      
-      // Save to localStorage for persistence
-      localStorage.setItem('token', token)
-      
+
+      // The refresh cookie was set by the server; only the short-lived access
+      // token is kept, in memory.
       setToken(token)
       setUser(user)
 
-      const redirect = searchParams.get('redirect')
-      router.push(redirect || '/chat')
+      // safeRedirect keeps this from becoming an open redirect.
+      router.push(safeRedirect(searchParams.get('redirect')))
     } catch (err: any) {
-      const errorMessage = err.response?.data?.error || err.message || 'Login failed'
+      const errorMessage =
+        err.response?.data?.error ||
+        (err.message && !err.message.includes('status code') && !err.message.includes('Network Error')
+          ? err.message
+          : 'Unable to sign in. Please check your credentials and try again.')
       setLocalError(errorMessage)
       setError(errorMessage)
     } finally {
@@ -68,10 +72,12 @@ function LoginContent() {
       <div className="w-full max-w-md">
         {/* Logo/Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary mb-4">
-            <span className="text-2xl font-bold text-primary-foreground">D</span>
-          </div>
-          <h1 className="text-3xl font-bold text-foreground mb-2">Discord Chat</h1>
+          <img
+            src="/icon.svg"
+            alt="Chatly"
+            className="w-16 h-16 rounded-2xl shadow-lg shadow-primary/20 mb-4 inline-block"
+          />
+          <h1 className="text-3xl font-bold text-foreground mb-2">Chatly</h1>
           <p className="text-muted-foreground">Connect with friends in real-time</p>
         </div>
 
@@ -161,7 +167,7 @@ function LoginContent() {
             <div className="mt-4 pt-4 border-t border-border">
               <p className="text-sm text-muted-foreground text-center">
                 Don't have an account?{' '}
-                <Link href="/register" className="text-primary hover:text-primary/80 font-medium">
+                <Link href={withRedirect('/register', searchParams.get('redirect'))} className="text-primary hover:text-primary/80 font-medium">
                   Sign up
                 </Link>
               </p>

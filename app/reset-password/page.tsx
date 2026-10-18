@@ -7,7 +7,7 @@ import api from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Lock, Key, Loader2, ArrowLeft, CheckCircle2 } from 'lucide-react'
+import { Lock, Key, Loader2, ArrowLeft, CheckCircle2, Mail } from 'lucide-react'
 
 function ResetPasswordForm() {
   const router = useRouter()
@@ -31,13 +31,26 @@ function ResetPasswordForm() {
     e.preventDefault()
     setError('')
 
+    const cleanEmail = email.trim().toLowerCase()
+    const cleanCode = code.trim()
+
+    if (!cleanEmail) {
+      setError('Please enter your email address')
+      return
+    }
+
+    if (!cleanCode) {
+      setError('Please enter the reset code')
+      return
+    }
+
     if (newPassword !== confirmPassword) {
       setError('Passwords do not match')
       return
     }
 
-    if (newPassword.length < 6) {
-      setError('Password must be at least 6 characters')
+    if (newPassword.length < 10) {
+      setError('Password must be at least 10 characters')
       return
     }
 
@@ -45,8 +58,8 @@ function ResetPasswordForm() {
 
     try {
       await api.post('/api/auth/reset-password', {
-        email,
-        code,
+        email: cleanEmail,
+        code: cleanCode,
         newPassword
       })
       setIsSuccess(true)
@@ -54,7 +67,12 @@ function ResetPasswordForm() {
         router.push('/login')
       }, 3000)
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to reset password')
+      const apiError =
+        err.response?.data?.details?.join(', ') ||
+        err.response?.data?.error ||
+        err.message ||
+        'Failed to reset password'
+      setError(apiError)
     } finally {
       setIsLoading(false)
     }
@@ -99,6 +117,25 @@ function ResetPasswordForm() {
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
+            <label htmlFor="email" className="text-sm font-medium text-foreground">
+              Email Address
+            </label>
+            <div className="relative">
+              <Mail className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
+              <Input
+                id="email"
+                type="email"
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="pl-10 bg-secondary border-border"
+                disabled={isLoading}
+                required
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
             <label htmlFor="code" className="text-sm font-medium text-foreground">
               Reset Code
             </label>
@@ -118,15 +155,18 @@ function ResetPasswordForm() {
           </div>
 
           <div className="space-y-2">
-            <label htmlFor="newPassword" className="text-sm font-medium text-foreground">
-              New Password
-            </label>
+            <div className="flex items-center justify-between">
+              <label htmlFor="newPassword" className="text-sm font-medium text-foreground">
+                New Password
+              </label>
+              <span className="text-xs text-muted-foreground">Min. 10 characters</span>
+            </div>
             <div className="relative">
               <Lock className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
               <Input
                 id="newPassword"
                 type="password"
-                placeholder="••••••••"
+                placeholder="At least 10 characters"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 className="pl-10 bg-secondary border-border"

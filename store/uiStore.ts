@@ -4,6 +4,7 @@ export interface UIState {
   sidebarOpen: boolean
   showFriendsPanel: boolean
   showAddFriendModal: boolean
+  showCreateGroupModal: boolean
   showUserProfile: boolean
   selectedUserId: string | null
   searchQuery: string
@@ -14,6 +15,7 @@ export interface UIState {
   toggleFriendsPanel: () => void
   setShowFriendsPanel: (show: boolean) => void
   setShowAddFriendModal: (show: boolean) => void
+  setShowCreateGroupModal: (show: boolean) => void
   toggleUserProfile: () => void
   setShowUserProfile: (show: boolean) => void
   setSelectedUserId: (userId: string | null) => void
@@ -26,6 +28,7 @@ export const useUIStore = create<UIState>((set) => ({
   sidebarOpen: true,
   showFriendsPanel: false,
   showAddFriendModal: false,
+  showCreateGroupModal: false,
   showUserProfile: false,
   selectedUserId: null,
   searchQuery: '',
@@ -38,6 +41,7 @@ export const useUIStore = create<UIState>((set) => ({
     set((state) => ({ showFriendsPanel: !state.showFriendsPanel })),
   setShowFriendsPanel: (show) => set({ showFriendsPanel: show }),
   setShowAddFriendModal: (show) => set({ showAddFriendModal: show }),
+  setShowCreateGroupModal: (show) => set({ showCreateGroupModal: show }),
   toggleUserProfile: () =>
     set((state) => ({ showUserProfile: !state.showUserProfile })),
   setShowUserProfile: (show) => set({ showUserProfile: show }),

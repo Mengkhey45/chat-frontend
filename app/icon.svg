@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <linearGradient id="chatlyBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#8B5CF6" />
+      <stop offset="50%" stop-color="#7C3AED" />
+      <stop offset="100%" stop-color="#4F46E5" />
+    </linearGradient>
+    <linearGradient id="chatlyC" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#7C3AED" />
+      <stop offset="100%" stop-color="#4F46E5" />
+    </linearGradient>
+    <filter id="chatlyShadow" x="-10%" y="-10%" width="125%" height="125%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#1E1B4B" flood-opacity="0.35" />
+    </filter>
+  </defs>
+
+  <!-- Base Squircle -->
+  <rect width="512" height="512" rx="120" fill="url(#chatlyBg)" />
+
+  <!-- Inner border highlight -->
+  <rect x="8" y="8" width="496" height="496" rx="114" fill="none" stroke="#FFFFFF" stroke-width="4" stroke-opacity="0.2" />
+
+  <!-- Chat Bubble with smooth drop shadow -->
+  <g filter="url(#chatlyShadow)">
+    <path d="M 174 110
+             L 338 110
+             A 64 64 0 0 1 402 174
+             L 402 296
+             A 64 64 0 0 1 338 360
+             L 210 360
+             L 140 405
+             C 126 414 110 403 110 387
+             L 110 174
+             A 64 64 0 0 1 174 110 Z"
+          fill="#FFFFFF" />
+  </g>
+
+  <!-- Stylized Brand 'C' inside bubble -->
+  <path d="M 305 185
+           C 290 172 270 164 248 164
+           C 202 164 168 198 168 244
+           C 168 290 202 324 248 324
+           C 270 324 290 316 305 303
+           C 313 296 313 284 305 277
+           C 298 270 286 270 279 276
+           C 271 284 260 289 248 289
+           C 222 289 203 269 203 244
+           C 203 219 222 199 248 199
+           C 260 199 271 204 279 212
+           C 286 218 298 218 305 211
+           C 313 204 313 192 305 185 Z"
+        fill="url(#chatlyC)" />
+
+  <!-- Dynamic Chat Dot on the top-right of C -->
+  <circle cx="320" cy="244" r="14" fill="#06B6D4" />
+</svg>
